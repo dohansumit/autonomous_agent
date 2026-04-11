@@ -1,0 +1,38 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+env/
+venv/
+autonomous/
+
+# Conda environments
+*.conda
+
+# Dataset files
+dataset/
+
+# Models
+models/
+
+# MLflow artifacts
+mlruns/
+
+# Logs
+logs/
+
+# Environment variables
+.env
+
+# Large files
+*.pt
+*.pth
+*.pkl
+*.joblib
+
+# Docker
+*.tar
+
+# OS files
+.DS_Store
