@@ -1,12 +1,14 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import mlflow
-import joblib
 import os
+import joblib
+import mlflow
+import mlflow.sklearn
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 class TrainingAgent:
@@ -17,62 +19,42 @@ class TrainingAgent:
 
         df = pd.read_csv("dataset/news.csv")
 
-        if df.empty:
-            print("Dataset empty")
-            return
-
-        X = df["text"]
-
+        # Generate sentiment labels automatically
         analyzer = SentimentIntensityAnalyzer()
 
-        labels = []
+        df["sentiment"] = df["text"].apply(
+            lambda x: 1 if analyzer.polarity_scores(x)["compound"] > 0 else 0
+        )
 
-        for text in X:
-            score = analyzer.polarity_scores(text)["compound"]
+        X = df["text"]
+        y = df["sentiment"]
 
-            if score >= 0:
-                labels.append(1)
-            else:
-                labels.append(0)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2
+        )
 
-        y = labels
+        vectorizer = TfidfVectorizer()
 
-        vectorizer = CountVectorizer()
+        X_train_vec = vectorizer.fit_transform(X_train)
+        X_test_vec = vectorizer.transform(X_test)
 
-        X_vec = vectorizer.fit_transform(X)
+        model = LogisticRegression()
 
-        models = {
-            "logistic": LogisticRegression(max_iter=1000),
-            "svm": SVC()
-        }
+        with mlflow.start_run():
 
-        best_model = None
-        best_score = 0
+            model.fit(X_train_vec, y_train)
 
-        mlflow.set_experiment("news_sentiment")
+            acc = model.score(X_test_vec, y_test)
 
-        for name, model in models.items():
+            print("accuracy:", acc)
 
-            with mlflow.start_run(run_name=name):
+            mlflow.log_metric("accuracy", acc)
 
-                model.fit(X_vec, y)
-
-                pred = model.predict(X_vec)
-
-                score = accuracy_score(y, pred)
-
-                print(name, "accuracy:", score)
-
-                mlflow.log_param("model", name)
-                mlflow.log_metric("accuracy", score)
-
-                if score > best_score:
-                    best_score = score
-                    best_model = model
+            mlflow.sklearn.log_model(model, "model")
 
         os.makedirs("models", exist_ok=True)
 
-        joblib.dump(best_model, "models/model.pkl")
+        joblib.dump(model, "models/model.pkl")
         joblib.dump(vectorizer, "models/vectorizer.pkl")
 
-        print("✅ Best model saved")
+        print("✅ Model saved")

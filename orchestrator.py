@@ -32,6 +32,40 @@ class Orchestrator:
         # Debugging
         self.debug_agent = DebugAgent()
 
+    def execute_task(self, task):
+
+        if task == "research":
+            print("🔎 Running Research Agent")
+            self.research_agent.find_data_source()
+
+        elif task == "data":
+            print("📥 Running Data Agent")
+            self.data_agent.run()
+
+        elif task == "eda":
+            print("📊 Running EDA Agent")
+            self.eda_agent.run()
+
+        elif task == "training":
+            print("🚀 Running Training Agent")
+            self.training_agent.run()
+
+        elif task == "tuning":
+            print("⚙ Running Hyperparameter Agent")
+            self.hyper_agent.tune()
+
+        elif task == "api":
+            print("🌐 Running API Agent")
+            self.api_agent.run()
+
+        elif task == "docker":
+            print("🐳 Running Docker Agent")
+            self.docker_agent.run()
+
+        elif task == "deploy":
+            print("🚀 Running Deployment Agent")
+            self.deployment_agent.deploy()
+
     def run(self, prompt):
 
         print("Planning project...")
@@ -40,39 +74,11 @@ class Orchestrator:
 
         for task in tasks:
 
+            retry = False
+
             try:
 
-                if task == "research":
-                    print("🔎 Running Research Agent")
-                    self.research_agent.find_data_source()
-
-                elif task == "data":
-                    print("📥 Running Data Agent")
-                    self.data_agent.run()
-
-                elif task == "eda":
-                    print("📊 Running EDA Agent")
-                    self.eda_agent.run()
-
-                elif task == "training":
-                    print("🚀 Running Training Agent")
-                    self.training_agent.run()
-
-                elif task == "tuning":
-                    print("⚙ Running Hyperparameter Agent")
-                    self.hyper_agent.tune()
-
-                elif task == "api":
-                    print("🌐 Running API Agent")
-                    self.api_agent.run()
-
-                elif task == "docker":
-                    print("🐳 Running Docker Agent")
-                    self.docker_agent.run()
-
-                elif task == "deploy":
-                    print("🚀 Running Deployment Agent")
-                    self.deployment_agent.deploy()
+                self.execute_task(task)
 
             except Exception as e:
 
@@ -83,10 +89,20 @@ class Orchestrator:
 
                 fix = self.debug_agent.analyze_error(str(e))
 
-                print("\n💡 Suggested Fix from LLM:\n")
+                print("\n💡 Suggested Fix / Applied Fix:\n")
                 print(fix)
 
-                print("\nContinuing execution...\n")
+                retry = True
+
+            # Retry once after fix
+            if retry:
+                try:
+                    print("\n🔁 Retrying task:", task)
+                    self.execute_task(task)
+
+                except Exception as e:
+                    print("⚠ Retry failed. Skipping task:", task)
+                    print("Error:", e)
 
         # Always push updates to Git at the end
         try:

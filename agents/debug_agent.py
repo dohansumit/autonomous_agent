@@ -1,32 +1,30 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import re
 
 
 class DebugAgent:
 
-    def __init__(self):
-
-        model_path = "Qwen/Qwen2.5-3B-Instruct"
-
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-        self.model = AutoModelForCausalLM.from_pretrained(model_path)
-
     def analyze_error(self, error):
 
-        prompt = f"""
-You are a Python debugging assistant.
+        print("🤖 Debug Agent analyzing error...")
 
-The following error occurred in a machine learning pipeline.
+        # simple automatic fixes
 
-Error:
-{error}
+        if "label" in error:
 
-Explain the problem and suggest a fix in simple Python terms.
-Do NOT generate unrelated code.
-"""
+            print("🔧 Fixing column name issue automatically...")
 
-        inputs = self.tokenizer(prompt, return_tensors="pt")
+            file_path = "agents/hyperparameter_agent.py"
 
-        outputs = self.model.generate(**inputs, max_new_tokens=300)
+            with open(file_path, "r") as f:
+                code = f.read()
 
-        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            code = code.replace('df["label"]', 'df["sentiment"]')
+
+            with open(file_path, "w") as f:
+                f.write(code)
+
+            print("✅ Column name fixed in hyperparameter_agent.py")
+
+            return "Replaced label with sentiment"
+
+        return "No automatic fix found"

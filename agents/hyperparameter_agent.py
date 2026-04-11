@@ -1,8 +1,11 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
-import joblib
+import mlflow
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
+
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 class HyperparameterAgent:
@@ -13,24 +16,46 @@ class HyperparameterAgent:
 
         df = pd.read_csv("dataset/news.csv")
 
+        # Generate sentiment labels (same logic as training agent)
+        analyzer = SentimentIntensityAnalyzer()
+
+        df["sentiment"] = df["text"].apply(
+            lambda x: 1 if analyzer.polarity_scores(x)["compound"] > 0 else 0
+        )
+
         X = df["text"]
-        y = df["label"]
+        y = df["sentiment"]
 
-        vectorizer = CountVectorizer()
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2
+        )
 
-        X_vec = vectorizer.fit_transform(X)
+        vectorizer = TfidfVectorizer()
 
-        param_grid = {
-            "C":[0.1,1,10]
-        }
+        X_train_vec = vectorizer.fit_transform(X_train)
+        X_test_vec = vectorizer.transform(X_test)
 
-        grid = GridSearchCV(LogisticRegression(), param_grid)
+        best_acc = 0
+        best_C = None
 
-        grid.fit(X_vec, y)
+        for C in [0.1, 1, 10]:
 
-        best_model = grid.best_estimator_
+            model = SVC(C=C)
 
-        joblib.dump(best_model,"models/model.pkl")
-        joblib.dump(vectorizer,"models/vectorizer.pkl")
+            with mlflow.start_run():
 
-        print("Best parameters:", grid.best_params_)
+                model.fit(X_train_vec, y_train)
+
+                acc = model.score(X_test_vec, y_test)
+
+                mlflow.log_param("C", C)
+                mlflow.log_metric("accuracy", acc)
+
+                print(f"C={C} accuracy={acc}")
+
+                if acc > best_acc:
+                    best_acc = acc
+                    best_C = C
+
+        print("Best hyperparameter:", best_C)
+        print("Best accuracy:", best_acc)
