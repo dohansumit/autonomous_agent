@@ -16,15 +16,10 @@ RUN pip install -r requirements.txt
 EXPOSE 8000
 EXPOSE 5000
 
-CMD sh -c "mlflow server \
---host 0.0.0.0 \
---port 5000 \
---backend-store-uri sqlite:///mlflow.db \
---default-artifact-root ./mlruns & \
-uvicorn api.app:app --host 0.0.0.0 --port 8000"
+CMD ["bash", "-c", "mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns & uvicorn api.app:app --host 0.0.0.0 --port 8000"]
 """
 
         with open("Dockerfile", "w") as f:
             f.write(dockerfile)
 
-        print("✅ Dockerfile created with MLflow + FastAPI")
+        print("Dockerfile created")
