@@ -52,11 +52,30 @@ jobs:
       run: |
         docker ps
 
-    - name: Check API health
+    - name: Wait for FastAPI
       run: |
-        sleep 10
-        curl -f http://localhost:8000/docs
+        echo "Waiting for FastAPI..."
+        for i in {1..20}; do
+          if curl -f http://localhost:8000/docs; then
+            echo "FastAPI ready"
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "FastAPI failed"
+        docker logs autonomous-agent
+        exit 1
 
-    - name: Check MLflow health
+    - name: Wait for MLflow
       run: |
-        curl -f http://localhost:5000
+        echo "Waiting for MLflow..."
+        for i in {1..30}; do
+          if curl -f http://localhost:5000; then
+            echo "MLflow ready"
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "MLflow failed"
+        docker logs autonomous-agent
+        exit 1
