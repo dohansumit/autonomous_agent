@@ -1,4 +1,4 @@
-name: Autonomous ML Pipeline
+name: Autonomous ML CI/CD
 
 on:
   push:
@@ -13,26 +13,13 @@ jobs:
 
     steps:
 
-    - name: Checkout repo
+    - name: Checkout code
       uses: actions/checkout@v3
-
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
-
-    - name: Install dependencies
-      run: |
-        pip install fastapi uvicorn scikit-learn joblib pandas mlflow
-
-    - name: Run ML pipeline
-      run: |
-        python main.py
 
     - name: Build Docker image
       run: |
-        docker build -t autonomous-agent .
+        docker build -t autonomous-agent:latest .
 
-    - name: Run Docker container
+    - name: Run container
       run: |
-        docker run -d -p 8000:8000 autonomous-agent
+        docker run -d -p 8000:8000 autonomous-agent:latest
