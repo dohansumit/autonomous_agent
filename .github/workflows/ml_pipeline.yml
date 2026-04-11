@@ -7,19 +7,51 @@ on:
 
 jobs:
 
-  build:
+  deploy:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run ML pipeline test
+      run: |
+        python main.py
 
     - name: Build Docker image
       run: |
         docker build -t autonomous-agent:latest .
 
-    - name: Run container
+    - name: Stop and remove old container
       run: |
-        docker run -d -p 8000:8000 autonomous-agent:latest
+        docker stop autonomous-agent || true
+        docker rm autonomous-agent || true
+
+    - name: Run new container
+      run: |
+        docker run -d \
+          --name autonomous-agent \
+          --restart always \
+          -p 8000:8000 \
+          autonomous-agent:latest
+
+    - name: Verify container status
+      run: |
+        docker ps
+
+    - name: Check API health
+      run: |
+        sleep 10
+        curl -f http://localhost:8000/docs || exit 1
