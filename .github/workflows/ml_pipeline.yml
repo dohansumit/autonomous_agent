@@ -45,13 +45,18 @@ jobs:
           --name autonomous-agent \
           --restart always \
           -p 8000:8000 \
+          -p 5000:5000 \
           autonomous-agent:latest
 
-    - name: Verify container status
+    - name: Verify container running
       run: |
         docker ps
 
     - name: Check API health
       run: |
         sleep 10
-        curl -f http://localhost:8000/docs || exit 1
+        curl -f http://localhost:8000/docs
+
+    - name: Check MLflow health
+      run: |
+        curl -f http://localhost:5000

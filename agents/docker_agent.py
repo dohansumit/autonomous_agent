@@ -1,9 +1,8 @@
-import os
-
-
 class DockerAgent:
 
     def run(self):
+
+        print("🐳 Running Docker Agent")
 
         dockerfile = """
 FROM python:3.10
@@ -12,12 +11,20 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install fastapi uvicorn scikit-learn joblib
+RUN pip install -r requirements.txt
 
-CMD ["uvicorn","api.app:app","--host","0.0.0.0","--port","8000"]
+EXPOSE 8000
+EXPOSE 5000
+
+CMD sh -c "mlflow server \
+--host 0.0.0.0 \
+--port 5000 \
+--backend-store-uri sqlite:///mlflow.db \
+--default-artifact-root ./mlruns & \
+uvicorn api.app:app --host 0.0.0.0 --port 8000"
 """
 
-        with open("Dockerfile","w") as f:
+        with open("Dockerfile", "w") as f:
             f.write(dockerfile)
 
-        print("Dockerfile created")
+        print("✅ Dockerfile created with MLflow + FastAPI")
