@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 import joblib
 import mlflow
 import mlflow.sklearn
@@ -19,7 +18,6 @@ class TrainingAgent:
 
         df = pd.read_csv("dataset/news.csv")
 
-        # Generate sentiment labels automatically
         analyzer = SentimentIntensityAnalyzer()
 
         df["sentiment"] = df["text"].apply(
@@ -40,20 +38,21 @@ class TrainingAgent:
 
         model = LogisticRegression()
 
+        mlflow.set_tracking_uri("http://localhost:5000")
+        mlflow.set_experiment("news_sentiment")
+
         with mlflow.start_run():
 
             model.fit(X_train_vec, y_train)
 
             acc = model.score(X_test_vec, y_test)
 
-            print("accuracy:", acc)
-
             mlflow.log_metric("accuracy", acc)
-
             mlflow.sklearn.log_model(model, "model")
 
-        os.makedirs("models", exist_ok=True)
+            print("accuracy:", acc)
 
+        # Save model locally
         joblib.dump(model, "models/model.pkl")
         joblib.dump(vectorizer, "models/vectorizer.pkl")
 

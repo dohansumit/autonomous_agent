@@ -1,14 +1,20 @@
-
 from fastapi import FastAPI
 import joblib
 
 app = FastAPI()
 
+# load vectorizer and model
+vectorizer = joblib.load("models/vectorizer.pkl")
 model = joblib.load("models/model.pkl")
 
+
 @app.get("/predict")
-def predict(text:str):
+def predict(text: str):
 
-    pred = model.predict([text])
+    vec = vectorizer.transform([text])
+    pred = model.predict(vec)[0]
 
-    return {"prediction":str(pred)}
+    return {
+        "text": text,
+        "prediction": int(pred)
+    }

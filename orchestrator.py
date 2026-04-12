@@ -1,3 +1,5 @@
+import os
+
 from agents.planner_agent import PlannerAgent
 from agents.data_agent import DataAgent
 from agents.eda_agent import EDAAgent
@@ -15,10 +17,8 @@ class Orchestrator:
 
     def __init__(self):
 
-        # Core planning
         self.planner = PlannerAgent()
 
-        # Agents
         self.data_agent = DataAgent()
         self.eda_agent = EDAAgent()
         self.training_agent = TrainingAgent()
@@ -29,7 +29,6 @@ class Orchestrator:
         self.research_agent = ResearchAgent()
         self.git_agent = GitAgent()
 
-        # Debugging
         self.debug_agent = DebugAgent()
 
     def execute_task(self, task):
@@ -74,8 +73,6 @@ class Orchestrator:
 
         for task in tasks:
 
-            retry = False
-
             try:
 
                 self.execute_task(task)
@@ -89,13 +86,9 @@ class Orchestrator:
 
                 fix = self.debug_agent.analyze_error(str(e))
 
-                print("\n💡 Suggested Fix / Applied Fix:\n")
+                print("\n💡 Suggested Fix:\n")
                 print(fix)
 
-                retry = True
-
-            # Retry once after fix
-            if retry:
                 try:
                     print("\n🔁 Retrying task:", task)
                     self.execute_task(task)
@@ -104,10 +97,12 @@ class Orchestrator:
                     print("⚠ Retry failed. Skipping task:", task)
                     print("Error:", e)
 
-        # Always push updates to Git at the end
-        try:
-            print("📦 Running Git Agent (CI/CD step)")
-            self.git_agent.run()
+        # Push to GitHub only when NOT inside CI
+        if not os.getenv("GITHUB_ACTIONS"):
 
-        except Exception as e:
-            print("⚠ Git push failed:", e)
+            try:
+                print("📦 Running Git Agent")
+                self.git_agent.run()
+
+            except Exception as e:
+                print("⚠ Git push failed:", e)

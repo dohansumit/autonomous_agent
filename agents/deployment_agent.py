@@ -1,5 +1,6 @@
 import subprocess
 import socket
+import os
 
 
 class DeploymentAgent:
@@ -10,13 +11,10 @@ class DeploymentAgent:
 
         image_name = "news-sentiment-agent"
 
-        # Build Docker image
-        print("📦 Building Docker image...")
-        subprocess.run(
-            f"docker build -t {image_name}:latest .",
-            shell=True,
-            check=True
-        )
+        # Skip deployment if running in GitHub Actions
+        if os.getenv("GITHUB_ACTIONS"):
+            print("⚠ Running inside CI/CD - skipping container deployment")
+            return
 
         # Stop existing container if running
         subprocess.run(
@@ -26,14 +24,15 @@ class DeploymentAgent:
 
         # Run container
         print("🐳 Running Docker container...")
+
         subprocess.run(
-            f"docker run -d -p 8000:8000 --name {image_name} {image_name}:latest",
+            f"docker run -d -p 8000:8000 -p 5000:5000 --name {image_name} {image_name}:latest",
             shell=True,
             check=True
         )
 
-        # Print API URL
         ip = socket.gethostbyname(socket.gethostname())
 
         print("\n✅ Deployment complete")
-        print(f"API available at: http://{ip}:8000/docs")
+        print(f"FastAPI: http://{ip}:8000/docs")
+        print(f"MLflow:  http://{ip}:5000")
