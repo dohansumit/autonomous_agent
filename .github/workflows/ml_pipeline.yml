@@ -11,7 +11,6 @@ runs-on: self-hosted
 
 ```
 steps:
-
   - name: Checkout repository
     uses: actions/checkout@v3
 
@@ -33,58 +32,5 @@ steps:
     run: |
       docker build -t autonomous-agent:latest .
 
-  - name: Stop old container
-    run: |
-      docker stop autonomous-agent || true
-      docker rm autonomous-agent || true
-
-  - name: Start container
-    run: |
-      docker run -d \
-        --name autonomous-agent \
-        --restart always \
-        -p 8000:8000 \
-        -p 5000:5000 \
-        autonomous-agent:latest
-
-  - name: Check container logs
-    run: |
-      docker ps -a
-      docker logs autonomous-agent
-
-  - name: Wait for FastAPI
-    run: |
-      echo "Checking FastAPI..."
-
-      for i in 1 2 3 4 5; do
-        if curl -s http://localhost:8000/health > /dev/null; then
-          echo "FastAPI ready"
-          exit 0
-        fi
-
-        echo "Attempt $i failed"
-        sleep 5
-      done
-
-      echo "FastAPI failed"
-      docker logs autonomous-agent
-      exit 1
-
-  - name: Wait for MLflow
-    run: |
-      echo "Checking MLflow..."
-
-      for i in 1 2 3 4 5; do
-        if curl -s http://localhost:5000 > /dev/null; then
-          echo "MLflow ready"
-          exit 0
-        fi
-
-        echo "Attempt $i failed"
-        sleep 5
-      done
-
-      echo "MLflow failed"
-      docker logs autonomous-agent
-      exit 1
+  - name: Stop old
 ```
