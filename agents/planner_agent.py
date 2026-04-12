@@ -13,7 +13,7 @@ class PlannerAgent:
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
         # Skip heavy model loading in CI environments
-        if os.getenv("CI") == "true":
+        if os.getenv("GITHUB_ACTIONS") == "true":
             self.model = None
             return
 

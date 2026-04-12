@@ -1,4 +1,6 @@
 from orchestrator import Orchestrator
+import os
+
 
 def main():
 
@@ -13,7 +15,12 @@ def main():
     """
 
     orchestrator = Orchestrator()
-    orchestrator.run(prompt)
+
+    # If running inside docker
+    if os.getenv("RUN_PIPELINE") == "true":
+        orchestrator.run(prompt)
+    else:
+        print("Skipping pipeline execution")
 
 
 if __name__ == "__main__":

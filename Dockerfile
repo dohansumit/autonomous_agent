@@ -12,11 +12,18 @@ RUN mkdir -p /app/mlruns /app/models /app/dataset
 EXPOSE 8000
 EXPOSE 5000
 
+ENV RUN_PIPELINE=true
+
 CMD bash -c "
-mlflow server 
---host 0.0.0.0 
---port 5000 
---backend-store-uri sqlite:///mlflow.db 
---default-artifact-root ./mlruns & 
-sleep 5 && 
-uvicorn api.app:app --host 0.0.0.0 --port 8000"
+mlflow server \
+--host 0.0.0.0 \
+--port 5000 \
+--backend-store-uri sqlite:///mlflow.db \
+--default-artifact-root ./mlruns &
+
+sleep 8 &&
+
+python main.py &&
+
+uvicorn api.app:app --host 0.0.0.0 --port 8000
+"

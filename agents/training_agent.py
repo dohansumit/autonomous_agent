@@ -58,7 +58,7 @@ class TrainingAgent:
         ])
 
         # MLflow setup
-        mlflow_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        mlflow_uri = os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns")
 
         mlflow.set_tracking_uri(mlflow_uri)
         mlflow.set_experiment("news_sentiment")
