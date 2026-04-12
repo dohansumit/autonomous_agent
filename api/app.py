@@ -28,3 +28,6 @@ def predict(text: str):
         "text": text,
         "prediction": sentiment
     }
+@app.get("/health")
+def health():
+    return {"status": "ok"}
