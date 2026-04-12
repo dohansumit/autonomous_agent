@@ -7,6 +7,7 @@ import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -30,6 +31,9 @@ class TrainingAgent:
 
         print(f"Loaded dataset with {len(df)} rows")
 
+        if "text" not in df.columns:
+            raise ValueError("Dataset must contain a 'text' column")
+
         # Sentiment labeling using VADER
         analyzer = SentimentIntensityAnalyzer()
 
@@ -47,13 +51,11 @@ class TrainingAgent:
             random_state=42
         )
 
-        # Vectorization
-        vectorizer = TfidfVectorizer()
-
-        X_train_vec = vectorizer.fit_transform(X_train)
-        X_test_vec = vectorizer.transform(X_test)
-
-        model = LogisticRegression(max_iter=1000)
+        # Build pipeline (vectorizer + model)
+        pipeline = Pipeline([
+            ("vectorizer", TfidfVectorizer()),
+            ("model", LogisticRegression(max_iter=1000))
+        ])
 
         # MLflow setup
         mlflow_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
@@ -65,22 +67,21 @@ class TrainingAgent:
 
         with mlflow.start_run():
 
-            model.fit(X_train_vec, y_train)
+            pipeline.fit(X_train, y_train)
 
-            acc = model.score(X_test_vec, y_test)
+            acc = pipeline.score(X_test, y_test)
 
             mlflow.log_metric("accuracy", acc)
 
-            # Log model
-            mlflow.sklearn.log_model(model, "model")
-
-            # Log vectorizer
-            mlflow.log_artifact("models/vectorizer.pkl") if os.path.exists("models/vectorizer.pkl") else None
+            # Log full pipeline
+            mlflow.sklearn.log_model(
+                pipeline,
+                artifact_path="model"
+            )
 
             print("accuracy:", acc)
 
         # Save model locally for FastAPI inference
-        joblib.dump(model, "models/model.pkl")
-        joblib.dump(vectorizer, "models/vectorizer.pkl")
+        joblib.dump(pipeline, "models/model.pkl")
 
-        print("✅ Model saved to models/")
+        print("✅ Model saved to models/model.pkl")
