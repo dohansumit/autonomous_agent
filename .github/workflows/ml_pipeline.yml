@@ -26,7 +26,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run ML pipeline test
+    - name: Run ML pipeline
       run: |
         python main.py
 
@@ -34,12 +34,12 @@ jobs:
       run: |
         docker build -t autonomous-agent:latest .
 
-    - name: Stop and remove old container
+    - name: Stop old container
       run: |
         docker stop autonomous-agent || true
         docker rm autonomous-agent || true
 
-    - name: Run new container
+    - name: Start container
       run: |
         docker run -d \
           --name autonomous-agent \
@@ -48,20 +48,23 @@ jobs:
           -p 5000:5000 \
           autonomous-agent:latest
 
-    - name: Verify container running
+    - name: Check container status
       run: |
-        docker ps
+        docker ps -a
+        docker logs autonomous-agent
 
     - name: Wait for FastAPI
       run: |
         echo "Waiting for FastAPI..."
-        for i in {1..20}; do
-          if curl -f http://localhost:8000/docs; then
+        for i in {1..30}; do
+          if curl -s http://localhost:8000/docs > /dev/null; then
             echo "FastAPI ready"
             exit 0
           fi
+          echo "Retrying FastAPI..."
           sleep 5
         done
+
         echo "FastAPI failed"
         docker logs autonomous-agent
         exit 1
@@ -70,12 +73,14 @@ jobs:
       run: |
         echo "Waiting for MLflow..."
         for i in {1..30}; do
-          if curl -f http://localhost:5000; then
+          if curl -s http://localhost:5000 > /dev/null; then
             echo "MLflow ready"
             exit 0
           fi
+          echo "Retrying MLflow..."
           sleep 5
         done
+
         echo "MLflow failed"
         docker logs autonomous-agent
         exit 1
