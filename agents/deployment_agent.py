@@ -35,4 +35,4 @@ class DeploymentAgent:
 
         print("\n✅ Deployment complete")
         print(f"FastAPI: http://{ip}:8000/docs")
-        print(f"MLflow:  http://{ip}:5000")
+        print(f"MLflow:  http://{ip}:5000") #
