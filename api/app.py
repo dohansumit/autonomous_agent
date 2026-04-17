@@ -31,3 +31,5 @@ def predict(text: str):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+#
